@@ -3,7 +3,7 @@ import axios from 'axios'
 
 const router = express.Router()
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-latest:generateContent'
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
 
 // Generate website code
 router.post('/', async (req, res) => {
@@ -130,7 +130,7 @@ router.post('/stream', async (req, res) => {
     messages.push({ role: 'user', parts: [{ text: prompt }] })
 
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-latest:streamGenerateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key=${apiKey}`,
       {
         contents: messages,
         generationConfig: {
