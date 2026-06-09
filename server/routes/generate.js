@@ -70,7 +70,7 @@ ${prompt}
       {
         model: 'llama-3.3-70b-versatile',
         messages,
-        max_tokens: 32768,
+        max_tokens: 8000,
         temperature: 0.7,
       },
       {
