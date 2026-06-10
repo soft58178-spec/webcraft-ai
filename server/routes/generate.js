@@ -61,6 +61,7 @@ REQUEST: ${prompt}`
         }
       },
       {
+        headers: { "ngrok-skip-browser-warning": "true" },
         timeout: 300000 // 5 минут
       }
     )
