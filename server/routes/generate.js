@@ -3,7 +3,21 @@ import axios from 'axios'
 
 const router = express.Router()
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent'
+const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions'
+
+const SYSTEM_PROMPT = `You are WebCraft AI Pro — the world's best full-stack website generator.
+
+RULES:
+1. Always generate COMPLETE, production-ready code
+2. Use React, Three.js, GSAP, Framer Motion
+3. Create stunning 3D animations and visual effects
+4. Generate full stack: Frontend + Backend + Database schema
+5. Every file must be complete — no placeholders, no shortcuts
+6. Use glassmorphism, gradients, particle effects, scroll animations
+7. Mobile responsive by default
+8. Always wrap each file in: ===FILE: filename.ext=== code ===ENDFILE===
+9. Generate ALL pages requested — never skip pages
+10. Include package.json and README.md with every project`
 
 router.post('/', async (req, res) => {
   const { prompt, siteData, history } = req.body
@@ -11,16 +25,18 @@ router.post('/', async (req, res) => {
   if (!prompt) return res.status(400).json({ error: 'Prompt is required' })
 
   try {
-    const apiKey = process.env.GEMINI_API_KEY
-    if (!apiKey) return res.status(500).json({ error: 'Gemini API key not configured' })
+    const apiKey = process.env.OPENROUTER_API_KEY
+    if (!apiKey) return res.status(500).json({ error: 'OpenRouter API key not configured' })
 
-    const messages = []
+    const messages = [
+      { role: 'system', content: SYSTEM_PROMPT }
+    ]
 
     if (history?.length > 0) {
       history.forEach(msg => {
         messages.push({
-          role: msg.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: msg.content }]
+          role: msg.role === 'assistant' ? 'assistant' : 'user',
+          content: msg.content
         })
       })
     }
@@ -38,42 +54,34 @@ USER REQUEST: ${prompt}
       `
     }
 
-    messages.push({ role: 'user', parts: [{ text: fullPrompt }] })
+    messages.push({ role: 'user', content: fullPrompt })
 
     const response = await axios.post(
-      `${GEMINI_API_URL}?key=${apiKey}`,
+      OPENROUTER_API_URL,
       {
-        contents: messages,
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 65536,
-        },
-        systemInstruction: {
-          parts: [{
-            text: `You are WebCraft AI Pro — the world's best full-stack website generator.
-RULES:
-1. Always generate COMPLETE, production-ready code
-2. Use React, Three.js, GSAP, Framer Motion
-3. Create stunning 3D animations and visual effects
-4. Generate full stack: Frontend + Backend + Database schema
-5. Every file must be complete — no placeholders
-6. Use glassmorphism, gradients, particle effects, scroll animations
-7. Mobile responsive by default
-8. Always wrap each file in: ===FILE: filename.ext=== code ===ENDFILE===
-9. Generate ALL pages requested
-10. Include package.json and README.md`
-          }]
-        }
+        model: 'qwen/qwen3-coder:free',
+        messages,
+        max_tokens: 32000,
+        temperature: 0.7,
       },
       {
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://webcraft-ai.onrender.com',
+          'X-Title': 'WebCraft AI Pro'
+        },
         timeout: 180000
       }
     )
 
-    const text = response.data.candidates[0].content.parts[0].text
+    const text = response.data.choices[0].message.content
 
-    res.json({ success: true, response: text, usage: response.data.usageMetadata })
+    res.json({
+      success: true,
+      response: text,
+      usage: response.data.usage
+    })
 
   } catch (error) {
     console.error('Generate error:', error.response?.data || error.message)
