@@ -59,7 +59,7 @@ USER REQUEST: ${prompt}
     const response = await axios.post(
       OPENROUTER_API_URL,
       {
-        model: 'qwen/qwen3-coder:free',
+        model: 'openrouter/auto',
         messages,
         max_tokens: 32000,
         temperature: 0.7,
