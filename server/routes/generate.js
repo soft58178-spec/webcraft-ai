@@ -59,7 +59,7 @@ USER REQUEST: ${prompt}
     const response = await axios.post(
       OPENROUTER_API_URL,
       {
-        model: 'openrouter/auto',
+        model: 'meta-llama/llama-3.3-70b-instruct:free',
         messages,
         max_tokens: 32000,
         temperature: 0.7,
