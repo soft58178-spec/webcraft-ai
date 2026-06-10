@@ -330,7 +330,7 @@ export default function Sidebar({
       }}>
         <div className="status-dot online" />
         <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>
-          Gemini 2.5 Pro Connected
+          WebCraft V1 Pro Connected
         </span>
       </div>
     </div>

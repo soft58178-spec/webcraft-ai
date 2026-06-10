@@ -362,7 +362,7 @@ export default function Chat({
           </motion.button>
         </motion.div>
         <div style={{ marginTop: '8px', fontSize: '11px', color: 'rgba(255,255,255,0.2)', textAlign: 'center' }}>
-          Enter to send · Shift+Enter for new line · Powered by Groq AI
+          Enter to send · Shift+Enter for new line · Powered by WebCraft AI
         </div>
       </div>
     </div>
