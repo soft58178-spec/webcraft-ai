@@ -3,7 +3,7 @@ import axios from 'axios'
 
 const router = express.Router()
 
-const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions'
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions'
 
 const SYSTEM_PROMPT = `You are WebCraft AI Pro — the world's best full-stack website generator.
 
@@ -12,7 +12,7 @@ RULES:
 2. Use React, Three.js, GSAP, Framer Motion
 3. Create stunning 3D animations and visual effects
 4. Generate full stack: Frontend + Backend + Database schema
-5. Every file must be complete — no placeholders, no shortcuts
+5. Every file must be 100% complete — no placeholders, no shortcuts
 6. Use glassmorphism, gradients, particle effects, scroll animations
 7. Mobile responsive by default
 8. Always wrap each file in: ===FILE: filename.ext=== code ===ENDFILE===
@@ -25,8 +25,8 @@ router.post('/', async (req, res) => {
   if (!prompt) return res.status(400).json({ error: 'Prompt is required' })
 
   try {
-    const apiKey = process.env.OPENROUTER_API_KEY
-    if (!apiKey) return res.status(500).json({ error: 'OpenRouter API key not configured' })
+    const apiKey = process.env.DEEPSEEK_API_KEY
+    if (!apiKey) return res.status(500).json({ error: 'DeepSeek API key not configured' })
 
     const messages = [
       { role: 'system', content: SYSTEM_PROMPT }
@@ -57,19 +57,18 @@ USER REQUEST: ${prompt}
     messages.push({ role: 'user', content: fullPrompt })
 
     const response = await axios.post(
-      OPENROUTER_API_URL,
+      DEEPSEEK_API_URL,
       {
-        model: 'meta-llama/llama-3.3-70b-instruct:free',
+        model: 'deepseek-chat',
         messages,
-        max_tokens: 32000,
+        max_tokens: 65536,
         temperature: 0.7,
+        stream: false
       },
       {
         headers: {
           'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://webcraft-ai.onrender.com',
-          'X-Title': 'WebCraft AI Pro'
+          'Content-Type': 'application/json'
         },
         timeout: 180000
       }
