@@ -2,196 +2,218 @@ export function buildWebsitePrompt(userMessage, scrapedData = null, history = []
   const isRedesign = scrapedData !== null
   const isFirstMessage = history.filter(m => m.role === 'user').length === 0
 
-  let prompt = ''
-
-  if (isRedesign && isFirstMessage) {
-    prompt = buildRedesignPrompt(userMessage, scrapedData)
-  } else if (isFirstMessage) {
-    prompt = buildNewWebsitePrompt(userMessage)
-  } else {
-    prompt = buildContinuationPrompt(userMessage, scrapedData)
-  }
-
-  return prompt
+  if (isRedesign && isFirstMessage) return buildRedesignPrompt(userMessage, scrapedData)
+  if (isFirstMessage) return buildNewWebsitePrompt(userMessage)
+  return buildContinuationPrompt(userMessage, scrapedData)
 }
 
 function buildNewWebsitePrompt(userMessage) {
   return `
-You are the world's best full-stack website developer. Generate a COMPLETE, production-ready website.
+You are the world's best full-stack developer. Generate a COMPLETE website.
 
 USER REQUEST: ${userMessage}
 
-STRICT REQUIREMENTS:
-1. Generate EVERY file completely — no shortcuts, no "// TODO", no placeholders
-2. Frontend: React + Vite with stunning visuals
-3. Include Three.js for 3D elements and animations
-4. Use GSAP or Framer Motion for smooth animations
-5. Add scroll-triggered animations (elements appear on scroll)
-6. Use glassmorphism, gradients, particle effects
-7. Backend: Node.js + Express with full REST API
-8. Database: Include schema (MongoDB or PostgreSQL)
-9. Generate ALL pages (minimum 10-15 pages for a real website)
-10. Mobile responsive — perfect on all screen sizes
-11. Include README.md with setup instructions
-12. Include .env.example with all required variables
-13. Each file wrapped in: ===FILE: path/filename.ext===
-   [complete file content]
-   ===ENDFILE===
+STRICT FILE STRUCTURE — generate ALL these files:
 
-VISUAL REQUIREMENTS:
-- Hero section with 3D Three.js background (particles, geometries, or custom shader)
-- Smooth page transitions
-- Parallax scrolling effects
-- Animated counters, progress bars
-- Hover micro-animations on all interactive elements
-- Custom cursor effect
-- Loading screen with animation
-- Dark theme with vibrant accent colors
-- Gradient text and backgrounds
-- Floating elements and depth effects
+FRONTEND (folder: frontend/):
+===FILE: frontend/package.json===
+[complete]
+===ENDFILE===
+===FILE: frontend/vite.config.js===
+[complete]
+===ENDFILE===
+===FILE: frontend/index.html===
+[complete]
+===ENDFILE===
+===FILE: frontend/src/main.jsx===
+[complete]
+===ENDFILE===
+===FILE: frontend/src/App.jsx===
+[complete with React Router for all pages]
+===ENDFILE===
+===FILE: frontend/src/index.css===
+[complete with all styles]
+===ENDFILE===
+===FILE: frontend/src/components/Header.jsx===
+[complete]
+===ENDFILE===
+===FILE: frontend/src/components/Footer.jsx===
+[complete]
+===ENDFILE===
+===FILE: frontend/src/components/Hero.jsx===
+[complete with Three.js 3D scene]
+===ENDFILE===
+===FILE: frontend/src/pages/Home.jsx===
+[complete]
+===ENDFILE===
+===FILE: frontend/src/pages/About.jsx===
+[complete]
+===ENDFILE===
+===FILE: frontend/src/pages/Services.jsx===
+[complete]
+===ENDFILE===
+===FILE: frontend/src/pages/Contact.jsx===
+[complete]
+===ENDFILE===
 
-PAGES TO GENERATE:
-Based on the user request, generate all relevant pages including:
-- Home/Landing page (hero, features, testimonials, CTA, footer)
-- About page
-- Services/Products page  
-- Individual service/product detail pages
-- Portfolio/Gallery (if relevant)
-- Blog/News section
-- Contact page with form
-- 404 error page
-- Any other relevant pages
+BACKEND (folder: backend/):
+===FILE: backend/package.json===
+[complete]
+===ENDFILE===
+===FILE: backend/server.js===
+[complete Express server]
+===ENDFILE===
+===FILE: backend/routes/api.js===
+[complete API routes]
+===ENDFILE===
+===FILE: backend/.env.example===
+[complete]
+===ENDFILE===
 
-FILE STRUCTURE TO GENERATE:
-frontend/
-  src/
-    components/ (Header, Footer, Hero, all section components)
-    pages/ (all page components)
-    hooks/ (custom hooks)
-    utils/ (helper functions)
-    styles/ (CSS modules or global styles)
-    App.jsx
-    main.jsx
-  public/
-    index.html
-  package.json
-  vite.config.js
+DATABASE:
+===FILE: database/schema.js===
+[complete MongoDB or SQL schema]
+===ENDFILE===
 
-backend/
-  routes/ (all API routes)
-  models/ (database models)
-  middleware/ (auth, validation, etc)
-  controllers/ (business logic)
-  server.js
-  package.json
+DOCS:
+===FILE: README.md===
+[complete setup instructions]
+===ENDFILE===
 
-database/
-  schema.sql (or schema.js for MongoDB)
-  seed.js (sample data)
+DESIGN REQUIREMENTS:
+- Dark luxury theme
+- Three.js 3D hero with particles and animations
+- Framer Motion page transitions
+- GSAP scroll animations
+- Glassmorphism cards
+- Gradient text and buttons
+- Custom animated cursor
+- Mobile responsive
 
-.env.example
-README.md
-
-START GENERATING ALL FILES NOW. Be thorough and complete.
+CRITICAL: Every single file must be 100% complete. Never write [complete file] or placeholders — write the actual code!
 `
 }
 
 function buildRedesignPrompt(userMessage, scrapedData) {
   const pages = scrapedData.pages || []
   const mainPage = pages[0] || {}
-
-  // Extract key content
   const allTexts = pages.flatMap(p => p.paragraphs || []).slice(0, 30)
-  const allHeadings = pages.flatMap(p => [...(p.h1 || []), ...(p.h2 || []), ...(p.h3 || [])]).slice(0, 40)
+  const allHeadings = pages.flatMap(p => [...(p.h1 || []), ...(p.h2 || [])]).slice(0, 40)
   const allButtons = pages.flatMap(p => p.buttons || []).slice(0, 20)
   const navItems = mainPage.navItems || []
   const images = scrapedData.downloadedImages || scrapedData.images?.slice(0, 20) || []
-  const colors = mainPage.colors?.slice(0, 10) || []
-  const fonts = mainPage.fonts?.slice(0, 5) || []
 
   return `
-You are the world's best full-stack website developer. Redesign this website with a completely new, stunning design while keeping ALL original content.
+You are the world's best full-stack developer. Redesign this website keeping ALL original content.
 
 ORIGINAL SITE: ${scrapedData.originalUrl}
-TOTAL PAGES SCRAPED: ${scrapedData.totalPages}
+TOTAL PAGES: ${scrapedData.totalPages}
 
-=== ORIGINAL CONTENT TO KEEP (USE ALL OF THIS) ===
+=== ORIGINAL CONTENT — USE ALL OF THIS ===
 
-NAVIGATION ITEMS:
-${navItems.map(n => `- ${n.text}: ${n.href}`).join('\n') || 'No nav items found'}
+NAVIGATION:
+${navItems.map(n => `- ${n.text}`).join('\n') || 'No nav items'}
 
 HEADINGS:
-${allHeadings.map(h => `- ${h}`).join('\n') || 'No headings found'}
+${allHeadings.map(h => `- ${h}`).join('\n')}
 
 TEXT CONTENT:
-${allTexts.map(t => `- ${t}`).join('\n') || 'No text found'}
+${allTexts.map(t => `- ${t}`).join('\n')}
 
-BUTTON LABELS:
-${allButtons.map(b => `- ${b}`).join('\n') || 'No buttons found'}
+BUTTONS:
+${allButtons.map(b => `- ${b}`).join('\n')}
 
-IMAGES AVAILABLE:
+IMAGES:
 ${images.slice(0, 15).map(img => {
-  const src = typeof img === 'string' ? img : img.localPath || img.originalUrl
-  return `- ${src}`
-}).join('\n') || 'No images'}
+    const src = typeof img === 'string' ? img : img.localPath || img.originalUrl
+    return `- ${src}`
+  }).join('\n')}
 
-ORIGINAL COLORS (for reference):
-${colors.join(', ') || 'Not detected'}
+PAGES TO RECREATE:
+${pages.map(p => `- ${p.title || p.url}`).join('\n')}
 
-ORIGINAL FONTS (for reference):
-${fonts.join(', ') || 'Not detected'}
+USER REQUEST: ${userMessage}
 
-PAGE URLS TO RECREATE:
-${pages.map(p => `- ${p.url} (${p.title})`).join('\n')}
+GENERATE THESE FILES:
 
-=== USER REDESIGN REQUEST ===
-${userMessage}
+FRONTEND (folder: frontend/):
+===FILE: frontend/package.json===
+[complete]
+===ENDFILE===
+===FILE: frontend/vite.config.js===
+[complete]
+===ENDFILE===
+===FILE: frontend/index.html===
+[complete]
+===ENDFILE===
+===FILE: frontend/src/main.jsx===
+[complete]
+===ENDFILE===
+===FILE: frontend/src/App.jsx===
+[complete with all pages from original site]
+===ENDFILE===
+===FILE: frontend/src/index.css===
+[complete]
+===ENDFILE===
+===FILE: frontend/src/components/Header.jsx===
+[complete with original navigation]
+===ENDFILE===
+===FILE: frontend/src/components/Footer.jsx===
+[complete]
+===ENDFILE===
+===FILE: frontend/src/components/Hero.jsx===
+[complete with Three.js 3D]
+===ENDFILE===
+[all other pages from original site]
 
-=== REDESIGN REQUIREMENTS ===
-1. Keep ALL original text content, headings, navigation items, button labels
-2. Use original images from the paths listed above
-3. Create a COMPLETELY NEW visual design — better, more modern, more stunning
-4. Add 3D elements with Three.js (hero background, product viewer, etc.)
-5. Add Framer Motion animations throughout
-6. Add scroll-triggered reveal animations
-7. Use glassmorphism, gradients, particle effects
-8. Keep the same number of pages as the original
-9. Generate complete full-stack code (React frontend + Node.js backend)
-10. Each file wrapped in: ===FILE: path/filename.ext===
-    [complete file content]
-    ===ENDFILE===
+BACKEND (folder: backend/):
+===FILE: backend/package.json===
+[complete]
+===ENDFILE===
+===FILE: backend/server.js===
+[complete]
+===ENDFILE===
+===FILE: backend/routes/api.js===
+[complete]
+===ENDFILE===
 
-GENERATE ALL FILES NOW. Do not skip any pages or components.
+===FILE: README.md===
+[complete]
+===ENDFILE===
+
+DESIGN:
+- Completely new stunning design
+- Keep ALL original texts, headings, buttons, images
+- Three.js 3D animations
+- Framer Motion transitions
+- Dark luxury theme
+- Glassmorphism
+
+CRITICAL: Write 100% complete code for every file. Never use placeholders!
 `
 }
 
 function buildContinuationPrompt(userMessage, scrapedData) {
   return `
-Continue working on this website project.
-
+Continue the website project.
 ${scrapedData ? `Original site: ${scrapedData.originalUrl}` : ''}
 
 USER REQUEST: ${userMessage}
 
-Generate the requested changes/additions as complete files.
-Each file wrapped in: ===FILE: path/filename.ext===
-[complete file content]
+Generate requested files as complete code:
+===FILE: path/filename.ext===
+[100% complete code]
 ===ENDFILE===
-
-Make sure all code is complete and production-ready.
 `
 }
 
 export function buildQuickPrompt(type, details) {
   const prompts = {
-    landing: `Create a stunning landing page for: ${details}. Include hero with 3D Three.js animation, features section, testimonials, pricing, and CTA. Make it visually breathtaking.`,
-    ecommerce: `Build a complete e-commerce store for: ${details}. Include product listings with 3D viewer, cart, checkout, user auth, and admin dashboard.`,
-    portfolio: `Create a creative portfolio website for: ${details}. Include 3D animated hero, project gallery with filters, about section, skills visualization, and contact form.`,
-    blog: `Build a modern blog platform for: ${details}. Include 3D animated header, article listings, categories, search, and admin panel.`,
-    dashboard: `Create an analytics dashboard for: ${details}. Include 3D data visualizations, charts, real-time updates, dark theme with neon accents.`,
-    restaurant: `Build a luxury restaurant website for: ${details}. Include 3D food animations, menu, reservations system, gallery, and location.`,
-    saas: `Create a SaaS product website for: ${details}. Include animated hero with product demo, features with icons, pricing tables, testimonials, and onboarding flow.`,
-    agency: `Build a creative agency website for: ${details}. Include immersive 3D hero, portfolio showcase, team section, services, and case studies.`,
+    landing: `Create stunning 3D landing page for: ${details}`,
+    ecommerce: `Build complete e-commerce store for: ${details}`,
+    portfolio: `Create creative 3D portfolio for: ${details}`,
+    restaurant: `Build luxury restaurant website for: ${details}`,
+    saas: `Create SaaS product website for: ${details}`,
   }
-  return prompts[type] || `Create a complete website for: ${details}`
+  return prompts[type] || `Create complete website for: ${details}`
 }

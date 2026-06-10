@@ -3,87 +3,73 @@ import axios from 'axios'
 
 const router = express.Router()
 
-const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions'
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent'
 
 const SYSTEM_PROMPT = `You are WebCraft AI Pro — the world's best full-stack website generator.
 
-RULES:
-1. Always generate COMPLETE, production-ready code
+CRITICAL RULES — NEVER BREAK THESE:
+1. Generate EVERY file 100% complete — no [complete file], no placeholders
 2. Use React, Three.js, GSAP, Framer Motion
-3. Create stunning 3D animations and visual effects
-4. Generate full stack: Frontend + Backend + Database schema
-5. Every file must be 100% complete — no placeholders, no shortcuts
-6. Use glassmorphism, gradients, particle effects, scroll animations
-7. Mobile responsive by default
-8. Always wrap each file in: ===FILE: filename.ext=== code ===ENDFILE===
-9. Generate ALL pages requested — never skip pages
-10. Include package.json and README.md with every project`
+3. Create stunning 3D animations
+4. Full stack: Frontend + Backend
+5. Wrap every file: ===FILE: path/file.ext=== content ===ENDFILE===
+6. NEVER stop mid-file — always finish completely
+7. Generate ALL pages — never skip
+8. Include package.json and README.md`
 
 router.post('/', async (req, res) => {
   const { prompt, siteData, history } = req.body
-
   if (!prompt) return res.status(400).json({ error: 'Prompt is required' })
 
   try {
-    const apiKey = process.env.DEEPSEEK_API_KEY
-    if (!apiKey) return res.status(500).json({ error: 'DeepSeek API key not configured' })
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) return res.status(500).json({ error: 'Gemini API key not configured' })
 
-    const messages = [
-      { role: 'system', content: SYSTEM_PROMPT }
-    ]
-
+    const messages = []
     if (history?.length > 0) {
       history.forEach(msg => {
         messages.push({
-          role: msg.role === 'assistant' ? 'assistant' : 'user',
-          content: msg.content
+          role: msg.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: msg.content }]
         })
       })
     }
 
     let fullPrompt = prompt
     if (siteData) {
-      fullPrompt = `
-SCRAPED WEBSITE DATA:
-Title: ${siteData.title}
-Pages: ${siteData.pages?.length || 0}
-Content: ${JSON.stringify(siteData.pages?.slice(0, 3), null, 2)}
+      fullPrompt = `SCRAPED SITE: ${siteData.originalUrl}
+Pages: ${siteData.totalPages}
+Content: ${JSON.stringify(siteData.pages?.slice(0, 3))}
 Images: ${siteData.images?.slice(0, 10).join('\n')}
 
-USER REQUEST: ${prompt}
-      `
+REQUEST: ${prompt}`
     }
 
-    messages.push({ role: 'user', content: fullPrompt })
+    messages.push({ role: 'user', parts: [{ text: fullPrompt }] })
 
     const response = await axios.post(
-      DEEPSEEK_API_URL,
+      `${GEMINI_API_URL}?key=${apiKey}`,
       {
-        model: 'deepseek-chat',
-        messages,
-        max_tokens: 65536,
-        temperature: 0.7,
-        stream: false
+        contents: messages,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 65536,
+        },
+        systemInstruction: {
+          parts: [{ text: SYSTEM_PROMPT }]
+        }
       },
       {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         timeout: 180000
       }
     )
 
-    const text = response.data.choices[0].message.content
-
-    res.json({
-      success: true,
-      response: text,
-      usage: response.data.usage
-    })
+    const text = response.data.candidates[0].content.parts[0].text
+    res.json({ success: true, response: text })
 
   } catch (error) {
-    console.error('Generate error:', error.response?.data || error.message)
+    console.error('Error:', error.response?.data || error.message)
     res.status(500).json({
       error: 'Generation failed',
       message: error.response?.data?.error?.message || error.message
