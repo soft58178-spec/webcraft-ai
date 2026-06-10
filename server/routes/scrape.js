@@ -48,10 +48,17 @@ router.post('/structure', async (req, res) => {
 
   try {
     const { default: puppeteer } = await import('puppeteer')
-    const browser = await puppeteer.launch({
-      headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    })
+   const browser = await puppeteer.launch({
+  headless: true,
+  args: [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage',
+    '--disable-gpu',
+    '--single-process'
+  ],
+  executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null
+})
 
     const page = await browser.newPage()
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 })
