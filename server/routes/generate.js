@@ -3,47 +3,24 @@ import axios from 'axios'
 
 const router = express.Router()
 
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent'
 
-const SYSTEM_PROMPT = `You are WebCraft AI Pro — the world's best full-stack website generator.
-
-RULES:
-1. Always generate COMPLETE, production-ready code
-2. Use modern technologies: React, Three.js, GSAP, Framer Motion
-3. Create stunning 3D animations and visual effects
-4. Generate full stack: Frontend + Backend + Database schema
-5. Every file must be complete — no placeholders, no "// add code here"
-6. Use glassmorphism, gradients, particle effects, scroll animations
-7. Mobile responsive by default
-8. Always wrap each file in: ===FILE: filename.ext=== code ===ENDFILE===
-9. Generate ALL pages requested — never skip pages
-10. Include package.json, README.md with every project`
-
-// Generate website code
 router.post('/', async (req, res) => {
   const { prompt, siteData, history } = req.body
 
-  if (!prompt) {
-    return res.status(400).json({ error: 'Prompt is required' })
-  }
+  if (!prompt) return res.status(400).json({ error: 'Prompt is required' })
 
   try {
-    const apiKey = process.env.GROQ_API_KEY
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) return res.status(500).json({ error: 'Gemini API key not configured' })
 
-    if (!apiKey) {
-      return res.status(500).json({ error: 'Groq API key not configured' })
-    }
+    const messages = []
 
-    // Build messages
-    const messages = [
-      { role: 'system', content: SYSTEM_PROMPT }
-    ]
-
-    if (history && history.length > 0) {
+    if (history?.length > 0) {
       history.forEach(msg => {
         messages.push({
-          role: msg.role === 'assistant' ? 'assistant' : 'user',
-          content: msg.content
+          role: msg.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: msg.content }]
         })
       })
     }
@@ -53,42 +30,50 @@ router.post('/', async (req, res) => {
       fullPrompt = `
 SCRAPED WEBSITE DATA:
 Title: ${siteData.title}
-Description: ${siteData.description}
 Pages: ${siteData.pages?.length || 0}
-Content: ${JSON.stringify(siteData.pages?.slice(0, 5), null, 2)}
-Images: ${siteData.images?.slice(0, 20).join('\n')}
+Content: ${JSON.stringify(siteData.pages?.slice(0, 3), null, 2)}
+Images: ${siteData.images?.slice(0, 10).join('\n')}
 
-USER REQUEST:
-${prompt}
+USER REQUEST: ${prompt}
       `
     }
 
-    messages.push({ role: 'user', content: fullPrompt })
+    messages.push({ role: 'user', parts: [{ text: fullPrompt }] })
 
     const response = await axios.post(
-      GROQ_API_URL,
+      `${GEMINI_API_URL}?key=${apiKey}`,
       {
-        model: 'llama-3.3-70b-versatile',
-        messages,
-        max_tokens: 8000,
-        temperature: 0.7,
+        contents: messages,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 65536,
+        },
+        systemInstruction: {
+          parts: [{
+            text: `You are WebCraft AI Pro — the world's best full-stack website generator.
+RULES:
+1. Always generate COMPLETE, production-ready code
+2. Use React, Three.js, GSAP, Framer Motion
+3. Create stunning 3D animations and visual effects
+4. Generate full stack: Frontend + Backend + Database schema
+5. Every file must be complete — no placeholders
+6. Use glassmorphism, gradients, particle effects, scroll animations
+7. Mobile responsive by default
+8. Always wrap each file in: ===FILE: filename.ext=== code ===ENDFILE===
+9. Generate ALL pages requested
+10. Include package.json and README.md`
+          }]
+        }
       },
       {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        timeout: 120000
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 180000
       }
     )
 
-    const text = response.data.choices[0].message.content
+    const text = response.data.candidates[0].content.parts[0].text
 
-    res.json({
-      success: true,
-      response: text,
-      usage: response.data.usage
-    })
+    res.json({ success: true, response: text, usage: response.data.usageMetadata })
 
   } catch (error) {
     console.error('Generate error:', error.response?.data || error.message)
